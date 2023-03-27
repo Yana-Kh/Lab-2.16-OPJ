@@ -94,13 +94,14 @@ def load_workers(file_name):
 
     # Открыть файл с заданным именем для чтения.
     with open(file_name, "r", encoding="utf-8") as fin:
-        try:
-            p = PersonSchema().load(json.load(fin), many=True)
-            print("Given JSON data is Valid")
-            return p
-        except ValidationError as err:
-            print("Given JSON data is InValid")
-            print(err)
+        data = json.load(fin)
+    try:
+        p = PersonSchema().load(data, many=True)
+        print("Given JSON data is Valid")
+        return p
+    except ValidationError as err:
+        print("Given JSON data is InValid")
+        print(err)
 
 
 def main():
