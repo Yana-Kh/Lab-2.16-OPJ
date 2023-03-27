@@ -3,24 +3,13 @@
 import json
 import sys
 from datetime import date
-import jsonschema
-from jsonschema import validate
-
-schema = {
-
-        "name": {"type": "string"},
-        "post": {"type": "string"},
-        "year": {"type": "number"},
-}
+from pydantic import BaseModel, ValidationError, validator
 
 
-def validateJson(jsonData):
-    try:
-        validate(instance=jsonData, schema=schema)
-    except jsonschema.exceptions.ValidationError as err:
-        print(err)
-        return False
-    return True
+class PersonSchema(BaseModel):
+    name: str
+    post: str
+    year: int
 
 
 def get_worker():
@@ -95,7 +84,7 @@ def save_workers(file_name, staff):
     with open(file_name, "w", encoding="utf-8") as fout:
         # Выполнить сериализацию данных в формат JSON.
         # Для поддержки кирилицы установим ensure_ascii=False
-        json.dump(staff, fout, ensure_ascii=False, indent=4)
+        json.dumps(staff, fout, ensure_ascii=False, indent=4)
 
 
 def load_workers(file_name):
@@ -105,7 +94,16 @@ def load_workers(file_name):
 
     # Открыть файл с заданным именем для чтения.
     with open(file_name, "r", encoding="utf-8") as fin:
-        return json.load(fin)
+        data = json.loads(fin.read())
+    try:
+        for i in data:
+            PersonSchema.parse_raw(str(i).replace("'", '"'))
+        print("Given JSON data is Valid")
+        return data
+    except ValidationError as err:
+        print("Given JSON data is Invalid")
+        print(err)
+
 
 
 def main():
@@ -126,7 +124,8 @@ def main():
         elif command == "add":
             # Запросить данные о работнике.
             worker = get_worker()
-            # Добавить словарь в список.
+            # Добавить словарь в список.load data
+
             workers.append(worker)
             # Отсортировать список в случае необходимости.
             if len(workers) > 1:
@@ -162,11 +161,7 @@ def main():
             file_name = parts[1]
             # Сохранить данные в файл с заданным именем.
             workers = load_workers(file_name)
-            is_valid = validateJson(workers)
-            if is_valid:
-                print("Given JSON data is Valid")
-            else:
-                print("Given JSON data is InValid")
+
 
         elif command == "help":
             # Вывести справку о работе с программой.
