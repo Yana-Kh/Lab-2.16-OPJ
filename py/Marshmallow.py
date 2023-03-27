@@ -3,24 +3,13 @@
 import json
 import sys
 from datetime import date
-import jsonschema
-from jsonschema import validate
-
-schema = {
-
-        "name": {"type": "string"},
-        "post": {"type": "string"},
-        "year": {"type": "number"},
-}
+from marshmallow import Schema, fields, INCLUDE, ValidationError
 
 
-def validateJson(jsonData):
-    try:
-        validate(instance=jsonData, schema=schema)
-    except jsonschema.exceptions.ValidationError as err:
-        print(err)
-        return False
-    return True
+class PersonSchema(Schema):
+    name = fields.Str()
+    post = fields.Str()
+    year = fields.Integer()
 
 
 def get_worker():
@@ -105,7 +94,13 @@ def load_workers(file_name):
 
     # Открыть файл с заданным именем для чтения.
     with open(file_name, "r", encoding="utf-8") as fin:
-        return json.load(fin)
+        try:
+            p = PersonSchema().load(json.load(fin), many=True)
+            print("Given JSON data is Valid")
+            return p
+        except ValidationError as err:
+            print("Given JSON data is InValid")
+            print(err)
 
 
 def main():
@@ -162,11 +157,6 @@ def main():
             file_name = parts[1]
             # Сохранить данные в файл с заданным именем.
             workers = load_workers(file_name)
-            is_valid = validateJson(workers)
-            if is_valid:
-                print("Given JSON data is Valid")
-            else:
-                print("Given JSON data is InValid")
 
         elif command == "help":
             # Вывести справку о работе с программой.
